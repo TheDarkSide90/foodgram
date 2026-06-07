@@ -28,17 +28,15 @@ services:
     container_name: foodgram-front
     image: thedarkside90/kittygram_frontend
     volumes:
-      - static:/frontend_static
+      - ../frontend/:/app/result_build/
 
-  gateway:
-    image: thedarkside90/foodgram_gateway
-    env_file: .env
-    restart: always
-    depends_on:
-      - backend
-      - frontend
+  nginx:
+    container_name: foodgram-proxy
+    image: nginx:1.25.4-alpine
     ports:
-      - 10000:80
+      - "10000:80"
     volumes:
-      - static:/static
-      - media:/media
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf
+      - ../frontend/build:/usr/share/nginx/html/
+      - ../docs/:/usr/share/nginx/html/api/docs/
+
