@@ -7,7 +7,7 @@ volumes:
 
 services:
   db:
-    image: postgres:13
+    image: postgres:14
     env_file: .env
     restart: always
     volumes:
@@ -26,7 +26,9 @@ services:
 
   frontend:
     container_name: foodgram-front
-    image: thedarkside90/kittygram_frontend
+    image: thedarkside90/foodgram_frontend
+    depends_on:
+      - db
     volumes:
       - static:/frontend_static
 
