@@ -29,6 +29,7 @@ services:
     image: thedarkside90/foodgram_frontend
     depends_on:
       - db
+    command: cp -r /app/build/. /frontend_static/
     volumes:
       - static:/frontend_static
 
