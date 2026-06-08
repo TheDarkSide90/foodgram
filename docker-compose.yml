@@ -14,7 +14,6 @@ services:
       - pg_data:/var/lib/postgresql/data
 
   backend:
-    container_name: foodgram-backend
     image: thedarkside90/foodgram_backend
     env_file: .env
     restart: always
@@ -25,7 +24,6 @@ services:
       - media:/media
 
   frontend:
-    container_name: foodgram-front
     image: thedarkside90/foodgram_frontend
     depends_on:
       - db
@@ -34,7 +32,6 @@ services:
       - static:/frontend_static
 
   gateway:
-    container_name: foodgram-gateway
     image: nginx:1.25.4-alpine
     env_file: .env
     restart: always
