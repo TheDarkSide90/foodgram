@@ -27,9 +27,9 @@ services:
     image: thedarkside90/foodgram_frontend
     depends_on:
       - db
-    command: cp -r /app/build/. /frontend_static/
     volumes:
       - static:/frontend_static
+      - ./frontend/:/app/result_build
 
   gateway:
     image: nginx:1.25.4-alpine
