@@ -23,13 +23,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-*o9-q242_e+pd^7^$f8o26b)8f(g5r--6l5&koq!)zswi6#0b_'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
 ALLOWED_HOSTS = [
     'localhost',
     '158.160.201.209',
     'foodgramproject.mooo.com',
-    'foodgram-backend'
     ]
 
 
@@ -46,8 +45,8 @@ INSTALLED_APPS = [
     'api.apps.ApiConfig',
     'users.apps.UsersConfig',
     'django_filters',
-    'rest_framework',
     'rest_framework.authtoken',
+    'rest_framework',
     'djoser',
 ]
 
@@ -118,7 +117,7 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/6.0/topics/i18n/
 
-LANGUAGE_CODE = 'ru-ru'
+LANGUAGE_CODE = 'en-us'
 
 TIME_ZONE = 'UTC'
 
@@ -132,10 +131,10 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 
-STATIC_ROOT = BASE_DIR / 'collected_static'
+STATIC_ROOT = '/app/staticfiles'
 
 MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR / 'media'
+MEDIA_ROOT = '/app/media'
 
 REST_FRAMEWORK = {
     'DEFAULT_FILTER_BACKENDS': [
