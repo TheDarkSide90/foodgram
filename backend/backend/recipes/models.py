@@ -53,18 +53,19 @@ class RecipeIngredient(models.Model):
     recipe = models.ForeignKey(
         Recipe,
         on_delete=models.CASCADE,
-        related_name='recipe_ingredient'
+        related_name='recipe_ingredients'
     )
-    ingredients = models.ForeignKey(
+    ingredient = models.ForeignKey(
         'Ingredient',
-        on_delete=models.CASCADE
+        on_delete=models.CASCADE,
+        related_name='recipes'
     )
     amount = models.PositiveIntegerField(
         verbose_name='Количество'
     )
 
     class Meta:
-        unique_together = ('recipe', 'ingredients')
+        unique_together = ('recipe', 'ingredient')
 
     def __str__(self):
         return f'{self.ingredients} - {self.amount}'
