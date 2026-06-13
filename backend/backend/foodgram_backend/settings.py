@@ -27,9 +27,12 @@ DEBUG = True
 
 ALLOWED_HOSTS = [
     'localhost',
-    '127.0.0.1',
     '158.160.201.209',
     'foodgramproject.mooo.com',
+]
+
+CSRF_TRUSTED_ORIGINS = [
+    "https://foodgramproject.mooo.com",
 ]
 
 
