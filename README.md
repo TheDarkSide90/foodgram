@@ -48,10 +48,10 @@ sudo docker compose exec backend cp -r /app/staticfiles/. /static/
 ```bash
 sudo docker compose exec backend python manage.py createsuperuser
 ```
-email: test@test.com
-first_name: test
-last_name: test
-password: test
+- email: test@test.com
+- first_name: test
+- last_name: test
+- password: test
 
 ## Доменное имя проекта:
 https://foodgramproject.mooo.com/
