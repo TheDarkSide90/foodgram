@@ -14,6 +14,7 @@
 - Docker
 
 ## Развёртывание проекта:
+```bash
 git clone https://github.com/TheDarkSide90/foodgram.git
 cd foodgram
 sudo docker compose pull
@@ -24,7 +25,7 @@ sudo docker compose exec backend python manage.py makemigrations --noinput
 sudo docker compose exec backend python manage.py migrate --noinput
 sudo docker compose exec backend python manage.py collectstatic --noinput
 sudo docker compose exec backend cp -r /app/staticfiles/. /static/
-
+```
 ## Вход в админку:
 sudo docker compose exec backend python manage.py createsuperuser
 email: test@test.com
