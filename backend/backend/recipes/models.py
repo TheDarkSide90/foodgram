@@ -2,6 +2,14 @@ from django.contrib.auth import get_user_model
 from django.core.validators import MinValueValidator
 from django.db import models
 
+from .constants import (
+    MAX_LENGTH_NAME_RECIPE,
+    MAX_LENGTH_NAME_TAG,
+    MAX_LENGTH_NAME_INGREDIENT,
+    MAX_LENGTH_NAME_MEASUREMENT,
+    MAX_LENGTH_CODE,
+)
+
 User = get_user_model()
 
 
@@ -11,7 +19,7 @@ class Recipe(models.Model):
         on_delete=models.CASCADE,
         verbose_name='Автор'
     )
-    name = models.CharField(max_length=256)
+    name = models.CharField(max_length=MAX_LENGTH_NAME_RECIPE)
     image = models.ImageField(
         upload_to='recipes/images/',
         null=True,
@@ -68,12 +76,16 @@ class RecipeIngredient(models.Model):
         unique_together = ('recipe', 'ingredient')
 
     def __str__(self):
-        return f'{self.ingredients} - {self.amount}'
+        return f'{self.ingredient} - {self.amount}'
 
 
 class Tag(models.Model):
-    name = models.CharField(unique=True, max_length=32, verbose_name='name')
-    slug = models.CharField(unique=True, max_length=32, verbose_name='slug')
+    name = models.CharField(
+        unique=True, max_length=MAX_LENGTH_NAME_TAG, verbose_name='Название'
+    )
+    slug = models.CharField(
+        unique=True, max_length=MAX_LENGTH_NAME_TAG, verbose_name='slug'
+    )
 
     def __str__(self):
         return self.name
@@ -81,11 +93,11 @@ class Tag(models.Model):
 
 class Ingredient(models.Model):
     name = models.CharField(
-        max_length=128,
+        max_length=MAX_LENGTH_NAME_INGREDIENT,
         verbose_name='Название'
     )
     measurement_unit = models.CharField(
-        max_length=64,
+        max_length=MAX_LENGTH_NAME_MEASUREMENT,
         verbose_name='Единица измерения'
     )
 
@@ -162,7 +174,7 @@ class ShortLink(models.Model):
         on_delete=models.CASCADE,
         related_name='short_link'
     )
-    code = models.CharField(max_length=10, unique=True)
+    code = models.CharField(max_length=MAX_LENGTH_CODE, unique=True)
 
     def __str__(self):
         return self.code

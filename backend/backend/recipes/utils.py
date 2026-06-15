@@ -1,14 +1,15 @@
 import string
 import random
 
+from .constants import GENERATE_RANGE
 from .models import ShortLink
 
+CHARS = string.ascii_letters + string.digits
 
-def generate_short_code():
-    chars = string.ascii_letters + string.digits
 
-    for _ in range(250):
-        code = ''.join(random.choice(chars) for _ in range(6))
+def generate_short_code(length=6):
+    for _ in range(GENERATE_RANGE):
+        code = ''.join(random.choice(CHARS) for _ in range(length))
         if not ShortLink.objects.filter(code=code).exists():
             return code
     raise RuntimeError("Не удалось сгенерировать уникальный код")

@@ -1,7 +1,11 @@
 from django_filters.rest_framework import (
-    FilterSet, CharFilter, BooleanFilter, NumberFilter)
+    BooleanFilter,
+    CharFilter,
+    FilterSet,
+    ModelMultipleChoiceFilter,
+)
 
-from recipes.models import Ingredient, Recipe
+from recipes.models import Ingredient, Recipe, Tag
 
 
 class IngredientFilter(FilterSet):
@@ -13,14 +17,22 @@ class IngredientFilter(FilterSet):
 
 
 class RecipeFilter(FilterSet):
-    tags = CharFilter(method='filter_tags')
+    tags = ModelMultipleChoiceFilter(
+        field_name='tags__slug',
+        queryset=Tag.objects.all(),
+        to_field_name='slug',
+    )
     is_favorited = BooleanFilter(method='filter_favorited')
     is_in_shopping_cart = BooleanFilter(method='filter_cart')
-    author = NumberFilter(field_name='author__id')
 
     class Meta:
         model = Recipe
-        fields = ()
+        fields = (
+            'author',
+            'tags',
+            'is_favorited',
+            'is_in_shopping_cart',
+        )
 
     def filter_favorited(self, queryset, name, value):
         user = self.request.user

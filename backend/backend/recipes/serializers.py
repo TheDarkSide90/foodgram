@@ -1,22 +1,10 @@
-import base64
-
 from django.contrib.auth.validators import UnicodeUsernameValidator
-from django.core.files.base import ContentFile
+from django.db import transaction
+from drf_extra_fields.fields import Base64ImageField
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
 
 from .models import Recipe, Ingredient, Tag, RecipeIngredient, User
-
-
-class Base64ImageField(serializers.ImageField):
-    def to_internal_value(self, data):
-        if isinstance(data, str) and data.startswith('data:image'):
-            format, imgstr = data.split(';base64,')
-            ext = format.split('/')[-1]
-
-            data = ContentFile(base64.b64decode(imgstr), name='temp.' + ext)
-
-        return super().to_internal_value(data)
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -150,7 +138,7 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
         required=True
     )
     text = serializers.CharField(write_only=True, required=True)
-    image = Base64ImageField(required=True)
+    image = Base64ImageField(required=True, allow_null=False)
 
     class Meta:
         model = Recipe
@@ -165,6 +153,17 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
             'cooking_time',
         )
 
+    def validate_image(self, value):
+        if value in (None, "", [], {}):
+            raise serializers.ValidationError("Поле image обязательно")
+        return value
+
+    def to_representation(self, instance):
+        return RecipeSerializer(
+            instance,
+            context=self.context
+        ).data
+
     def _create_ingredients(self, recipe, ingredients):
         RecipeIngredient.objects.bulk_create([
             RecipeIngredient(
@@ -175,6 +174,7 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
             for item in ingredients
         ])
 
+    @transaction.atomic
     def create(self, validated_data):
         ingredients_data = validated_data.pop('ingredients')
         tags = validated_data.pop('tags')
@@ -188,18 +188,11 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
         )
 
         recipe.tags.set(tags)
-
-        RecipeIngredient.objects.bulk_create([
-            RecipeIngredient(
-                recipe=recipe,
-                ingredient_id=item['id'],
-                amount=item['amount']
-            )
-            for item in ingredients_data
-        ])
+        self._create_ingredients(recipe, ingredients_data)
 
         return recipe
 
+    @transaction.atomic
     def update(self, instance, validated_data):
         ingredients = validated_data.pop('ingredients', None)
         tags = validated_data.pop('tags', None)
@@ -370,7 +363,7 @@ class FollowSerializer(serializers.ModelSerializer):
 
 
 class AvatarSerializer(serializers.ModelSerializer):
-    avatar = Base64ImageField(required=True)
+    avatar = Base64ImageField(required=True, allow_null=False)
 
     class Meta:
         model = User

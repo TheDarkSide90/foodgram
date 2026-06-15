@@ -1,7 +1,6 @@
 from django_filters.rest_framework import DjangoFilterBackend
-from django.shortcuts import get_object_or_404
+from django.shortcuts import redirect, get_object_or_404
 from django.http import HttpResponse
-from django.urls import reverse
 from django.db.models import Sum
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
@@ -62,89 +61,94 @@ class RecipeViewSet(viewsets.ModelViewSet):
             return [IsAuthenticated()]
         return [IsAuthenticatedOrReadOnly(), IsAuthorOrReadOnly()]
 
+    @staticmethod
+    def handle_add_remove(request, pk, model, serializer_class):
+        user = request.user
+        recipe = get_object_or_404(Recipe, pk=pk)
+
+        if request.method == 'POST':
+            obj, created = model.objects.get_or_create(
+                user=user,
+                recipe=recipe
+            )
+
+            if not created:
+                return Response(
+                    {'errors': 'Уже добавлено'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            return Response(
+                serializer_class(recipe, context={'request': request}).data,
+                status=status.HTTP_201_CREATED
+            )
+
+        deleted, _ = model.objects.filter(
+            user=user,
+            recipe=recipe
+        ).delete()
+
+        if not deleted:
+            return Response(
+                {'errors': 'Объект не найден'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
     @action(detail=True, methods=['get'], url_path='get-link')
     def get_link(self, request, pk=None):
         recipe = self.get_object()
 
         obj, created = ShortLink.objects.get_or_create(recipe=recipe)
 
-        if created or not obj.code:
+        if not obj.code:
             obj.code = generate_short_code()
             obj.save()
 
         return Response({
-            "short-link": request.build_absolute_uri(f"/s/{obj.code}/")
+            'short-link': request.build_absolute_uri(f'/s/{obj.code}/')
         })
 
     @action(detail=True, methods=[
-        'post', 'delete'
+        'post'
     ], permission_classes=[IsAuthenticated])
     def favorite(self, request, pk=None):
-        recipe = self.get_object()
-        user = request.user
+        return self.handle_add_remove(
+            request,
+            pk,
+            Favorite,
+            ShortRecipeSerializer
+        )
 
-        if request.method == 'POST':
-            obj, created = Favorite.objects.get_or_create(
-                user=user,
-                recipe=recipe
-            )
-
-            if not created:
-                return Response(
-                    {'errors': 'Уже в избранном'},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-
-            serializer = ShortRecipeSerializer(recipe)
-            return Response(serializer.data, status=201)
-
-        favorite = Favorite.objects.filter(user=user, recipe=recipe)
-
-        if not favorite.exists():
-            return Response(
-                {'errors': 'Не в избранном'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
-        favorite.delete()
-
-        return Response(status=status.HTTP_204_NO_CONTENT)
+    @favorite.mapping.delete
+    def delete_favorite(self, request, pk=None):
+        return self.handle_add_remove(
+            request,
+            pk,
+            Favorite,
+            ShortRecipeSerializer
+        )
 
     @action(detail=True, methods=[
-        'post', 'delete'
+        'post'
     ], permission_classes=[IsAuthenticated])
     def shopping_cart(self, request, pk=None):
-        recipe = self.get_object()
-        user = request.user
+        return self.handle_add_remove(
+            request,
+            pk,
+            ShoppingCart,
+            ShortRecipeSerializer
+        )
 
-        if request.method == 'POST':
-            obj, created = ShoppingCart.objects.get_or_create(
-                user=user,
-                recipe=recipe
-            )
-
-            if not created:
-                return Response(
-                    {'errors': 'Рецепт уже в корзине'},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-
-            return Response(
-                ShortRecipeSerializer(recipe).data,
-                status=status.HTTP_201_CREATED
-            )
-
-        cart_item = ShoppingCart.objects.filter(user=user, recipe=recipe)
-
-        if not cart_item.exists():
-            return Response(
-                {'errors': 'Рецепта нет в корзине'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
-        cart_item.delete()
-
-        return Response(status=status.HTTP_204_NO_CONTENT)
+    @shopping_cart.mapping.delete
+    def delete_shopping_cart(self, request, pk=None):
+        return self.handle_add_remove(
+            request,
+            pk,
+            ShoppingCart,
+            ShortRecipeSerializer
+        )
 
     @action(detail=False,
             methods=['get'],
@@ -196,33 +200,11 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
         return response
 
-    def create(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
+    def perform_create(self, serializer):
+        serializer.save()
 
-        recipe = serializer.save()
-
-        return Response(
-            RecipeSerializer(
-                recipe,
-                context={'request': request}
-            ).data,
-            status=status.HTTP_201_CREATED
-        )
-
-    def update(self, request, *args, **kwargs):
-        instance = self.get_object()
-        serializer = self.get_serializer(
-            instance,
-            data=request.data,
-            partial=True
-        )
-        serializer.is_valid(raise_exception=True)
-        recipe = serializer.save()
-
-        return Response(
-            RecipeSerializer(recipe, context={'request': request}).data
-        )
+    def perform_update(self, serializer):
+        serializer.save()
 
     def destroy(self, request, *args, **kwargs):
         recipe = self.get_object()
@@ -375,19 +357,11 @@ class UserViewSet(viewsets.ModelViewSet):
 
 
 class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = Ingredient.objects.all()
     serializer_class = IngredientSerializer
     pagination_class = None
     filter_backends = [DjangoFilterBackend]
     filterset_class = IngredientFilter
-
-    def get_queryset(self):
-        queryset = Ingredient.objects.all()
-        name = self.request.query_params.get('name')
-
-        if name:
-            queryset = queryset.filter(name__icontains=name)
-
-        return queryset
 
 
 class TagViewSet(viewsets.ReadOnlyModelViewSet):
@@ -398,8 +372,4 @@ class TagViewSet(viewsets.ReadOnlyModelViewSet):
 
 def short_link_redirect(request, code):
     link = get_object_or_404(ShortLink, code=code)
-    url = reverse(
-        'recipes-detail',
-        kwargs={'pk': link.recipe.id}
-    )
-    return HttpResponse(url)
+    return redirect(f'/recipes/{link.recipe.id}/')
