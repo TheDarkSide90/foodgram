@@ -372,4 +372,4 @@ class TagViewSet(viewsets.ReadOnlyModelViewSet):
 
 def short_link_redirect(request, code):
     link = get_object_or_404(ShortLink, code=code)
-    return redirect(f'/recipes/{link.recipe.id}/')
+    return redirect(f'/recipes/{link.recipe.id}')
