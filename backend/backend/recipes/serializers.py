@@ -154,7 +154,7 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
         )
 
     def validate_image(self, value):
-        if value in (None, "", [], {}):
+        if not value:
             raise serializers.ValidationError("Поле image обязательно")
         return value
 
