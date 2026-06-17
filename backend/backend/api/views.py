@@ -107,7 +107,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
             obj.save()
 
         return Response({
-            'short-link': request.build_absolute_uri(f'/s/{obj.code}/')
+            'short-link': request.build_absolute_uri(f'/s/{obj.code}')
         })
 
     @action(detail=True, methods=[
